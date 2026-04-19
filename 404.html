@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="./" />
+  <title>BetAI Now</title>
+  <meta name="theme-color" content="#020812" />
+  <style>
+    :root{
+      --bg:#020812;
+      --bg-soft:#06111d;
+      --panel:#07131d;
+      --panel-2:#0a1723;
+      --panel-3:#0c1a28;
+      --line:rgba(255,255,255,.08);
+      --line-soft:rgba(255,255,255,.05);
+      --text:#f5fbff;
+      --muted:#8fa5b7;
+      --green:#1fe2ae;
+      --green-2:#18c88f;
+      --green-3:rgba(31,226,174,.16);
+      --danger:#ef5350;
+      --warning:#f59e0b;
+      --shadow:0 24px 70px rgba(0,0,0,.42);
+      --radius:26px;
+      --radius-sm:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--text);
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(31,226,174,.14), transparent 30%),
+        radial-gradient(circle at 0% 100%, rgba(29,78,216,.10), transparent 28%),
+        linear-gradient(180deg,#01050a 0%, #020812 45%, #030a14 100%);
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+      background-size:64px 64px;
+      opacity:.18;
+      pointer-events:none;
+      z-index:-1;
+    }
+    .hidden{display:none!important}
+    .loading{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-size:18px;
+      color:#dbe7ee;
+    }
+    .page{min-height:100vh;padding:18px}
+    .shell{max-width:1580px;margin:0 auto}
+    .card{
+      position:relative;
+      background:linear-gradient(180deg, rgba(8,19,29,.98), rgba(4,10,16,.98));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card.soft{
+      background:linear-gradient(180deg, rgba(10,24,37,.96), rgba(6,13,20,.98));
+    }
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 26%);
+      pointer-events:none;
+    }
+    .eyebrow{
+      font-size:12px;
+      letter-spacing:.34em;
+      text-transform:uppercase;
+      color:var(--green);
+      font-weight:800;
+    }
+    .muted{color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:12px 16px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      font-weight:700;
+    }
+    .btn{
+      height:58px;
+      border:none;
+      border-radius:18px;
+      padding:0 20px;
+      font-weight:900;
+      font-size:17px;
+      cursor:pointer;
+      transition:transform .18s ease, opacity .18s ease;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn-primary{
+      background:linear-gradient(180deg, var(--green), var(--green-2));
+      color:#062117;
+      box-shadow:0 14px 30px rgba(31,226,174,.18);
+    }
+    .btn-danger{
+      background:rgba(239,83,80,.12);
+      color:#ffc1be;
+      border:1px solid rgba(239,83,80,.18);
+    }
+
+    
+    /* AUTH */
+    .sr-only{
+      position:absolute!important;
+      width:1px;height:1px;
+      padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+    .auth-exact-page{
+      padding:0;
+      min-height:100vh;
+      background:#020812;
+    }
+    .auth-exact-shell{
+      position:relative;
+      width:100vw;
+      height:100vh;
+      overflow:hidden;
+      background:#020812;
+    }
+    .auth-reference{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:fill;
+      user-select:none;
+      pointer-events:none;
+    }
+    .auth-live-overlay{
+      position:absolute;
+      inset:0;
+    }
+
+    /* exact clickable/input area based on reference proportions */
+    .auth-hitbox{
+      position:absolute;
+      left:50.45%;
+      top:58.8%;
+      width:26.2%;
+      height:31.2%;
+      transform:translate(-50%,-50%);
+      min-width:360px;
+      min-height:316px;
+    }
+    .auth-tab{
+      position:absolute;
+      top:0;
+      height:13.8%;
+      border:none;
+      background:transparent;
+      cursor:pointer;
+      border-radius:16px;
+    }
+    .auth-tab-login{left:4%; width:45.2%}
+    .auth-tab-register{right:4%; width:45.2%}
+
+    .auth-input{
+      position:absolute;
+      left:4%;
+      width:92%;
+      height:14.2%;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.05);
+      background:linear-gradient(90deg, rgba(9,20,31,.98), rgba(11,24,37,.94));
+      color:#eef7fb;
+      outline:none;
+      padding:0 16px;
+      font-size:16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .auth-input:focus{
+      border-color:rgba(31,226,174,.36);
+      box-shadow:0 0 0 4px rgba(31,226,174,.08);
+    }
+    .auth-email{top:29.8%}
+    .auth-password{top:54.6%}
+
+    .auth-status-row{
+      position:absolute;
+      left:4%;
+      top:74.5%;
+      width:92%;
+      height:11.8%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:0 14px;
+      border-radius:15px;
+      border:1px solid rgba(255,255,255,.05);
+      background:linear-gradient(90deg, rgba(8,19,29,.98), rgba(11,24,37,.94));
+      color:#dce7ef;
+      font-size:14px;
+    }
+    .auth-notice{
+      position:absolute;
+      left:4%;
+      top:87.2%;
+      width:92%;
+      min-height:18px;
+      font-size:13px;
+      color:#98f6d8;
+      line-height:1.2;
+      text-align:left;
+    }
+    .auth-submit{
+      position:absolute;
+      left:4%;
+      top:93.7%;
+      width:92%;
+      height:15.5%;
+      border:none;
+      border-radius:16px;
+      background:transparent;
+      cursor:pointer;
+    }
+
+    .auth-live-stats{
+      position:absolute;
+      left:50.1%;
+      top:75.6%;
+      width:26.4%;
+      height:15.2%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      color:#1fe2ae;
+      font-weight:900;
+      text-align:center;
+      text-shadow:0 0 12px rgba(31,226,174,.12);
+    }
+    .auth-live-stats > div{
+      position:absolute;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .stat-registered{
+      left:7.4%;
+      top:66%;
+      width:19%;
+      font-size:18px;
+    }
+    .stat-active{
+      left:40.5%;
+      top:66%;
+      width:19%;
+      font-size:18px;
+    }
+    .stat-time{
+      left:70%;
+      top:64%;
+      width:24%;
+      font-size:17px;
+    }
+
+    @media (max-width: 1200px){
+      .auth-hitbox{
+        left:50%;
+        top:61%;
+        width:min(430px, 92vw);
+        height:330px;
+        transform:translate(-50%,-50%);
+        min-width:unset;
+        min-height:unset;
+      }
+      .auth-live-stats{
+        left:50%;
+        top:79%;
+        width:min(440px, 92vw);
+        height:130px;
+        transform:translate(-50%,-50%);
+      }
+    }
+
+    @media (max-width: 900px){
+      .auth-reference{
+        object-fit:cover;
+        object-position:center;
+      }
+      .auth-hitbox{
+        top:66%;
+      }
+      .auth-live-stats{
+        top:86%;
+      }
+    }
+
+    /* APP */
+    .app-shell{
+      display:grid;
+      grid-template-columns:220px minmax(640px,1fr) 290px;
+      gap:18px;
+      min-height:calc(100vh - 36px);
+    }
+    .sidebar,.content,.aside{display:grid;gap:18px;align-content:start}
+    .profile-card{
+      padding:24px;
+      text-align:center;
+    }
+    .avatar{
+      width:90px;height:90px;border-radius:50%;
+      margin:6px auto 16px;
+      display:grid;place-items:center;
+      font-size:32px;font-weight:900;
+      border:2px solid rgba(31,226,174,.88);
+      background:linear-gradient(145deg,#1b2a3c,#0c1620);
+      box-shadow:0 0 0 8px rgba(31,226,174,.06);
+    }
+    .profile-name{font-size:18px;font-weight:800}
+    .profile-tag{margin-top:8px;color:#bfced7}
+    .profile-tag b{color:var(--green)}
+    .profile-meta{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;
+      margin-top:22px;text-align:left;
+    }
+    .profile-meta strong{display:block;font-size:30px;margin-top:4px}
+
+    .nav-card{padding:14px;display:grid;gap:8px}
+    .nav-item{
+      display:flex;align-items:center;gap:12px;
+      padding:15px 16px;
+      border-radius:16px;
+      color:#dde7ed;
+      border:1px solid transparent;
+    }
+    .nav-item.active{
+      background:linear-gradient(90deg, rgba(11,122,95,.84), rgba(31,226,174,.14));
+      border-color:rgba(31,226,174,.16);
+    }
+    .nav-dot{width:18px;text-align:center}
+    .logout-btn{
+      width:100%;
+      height:50px;
+      margin-top:8px;
+    }
+
+    .topbar{
+      padding:14px;
+      display:grid;
+      grid-template-columns:minmax(260px,1fr) auto auto;
+      gap:14px;
+      align-items:center;
+    }
+    .search{
+      height:60px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.045);
+      color:#fff;
+      outline:none;
+      padding:0 18px;
+      font-size:16px;
+    }
+    .icon-btn{
+      width:50px;height:50px;
+      border-radius:16px;
+      display:grid;place-items:center;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      position:relative;
+    }
+    .badge{
+      position:absolute;top:-5px;right:-5px;
+      width:22px;height:22px;border-radius:50%;
+      display:grid;place-items:center;
+      background:var(--green);
+      color:#062116;
+      font-size:12px;font-weight:900;
+    }
+    .wallet{
+      height:60px;
+      padding:0 18px;
+      display:flex;align-items:center;gap:12px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      font-weight:900;
+    }
+    .wallet-icon{
+      width:34px;height:34px;border-radius:10px;
+      display:grid;place-items:center;
+      border:1px solid rgba(31,226,174,.22);
+      color:var(--green);
+    }
+
+    .hero{
+      padding:28px 34px;
+      min-height:220px;
+      display:grid;
+      grid-template-columns:1fr 280px;
+      gap:18px;
+      align-items:center;
+      background:
+        linear-gradient(90deg, rgba(4,10,18,.90) 0%, rgba(4,10,18,.58) 42%, rgba(4,10,18,.74) 100%),
+        radial-gradient(circle at 70% 24%, rgba(255,255,255,.14), transparent 12%),
+        linear-gradient(180deg,#0b1c2b,#07111b);
+    }
+    .hero::before{
+      content:"";
+      position:absolute;
+      right:-10px; bottom:-6px;
+      width:320px;height:220px;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(255,255,255,.16), transparent 10%),
+        radial-gradient(circle at 54% 34%, rgba(31,226,174,.16), transparent 18%),
+        radial-gradient(circle at 54% 78%, rgba(255,255,255,.11), transparent 20%);
+      filter:blur(1px);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .hero h2{
+      margin:0 0 12px;
+      font-size:58px;
+      line-height:.94;
+      letter-spacing:-.045em;
+    }
+    .hero p{
+      margin:0;
+      max-width:560px;
+      color:#dce7ee;
+      font-size:18px;
+    }
+    .filters{
+      display:flex;flex-wrap:wrap;gap:10px;
+      margin-top:22px;
+    }
+    .filter-pill{
+      padding:13px 18px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      font-weight:800;
+    }
+    .filter-pill.active{
+      background:linear-gradient(180deg, var(--green), var(--green-2));
+      color:#072117;
+    }
+    .hero-metric{
+      justify-self:end;
+      min-width:220px;
+      text-align:left;
+      position:relative;
+      z-index:1;
+    }
+    .hero-metric .label{color:#dce6ed}
+    .hero-metric .big{
+      margin-top:10px;
+      font-size:64px;
+      font-weight:900;
+      color:var(--green);
+      line-height:1;
+    }
+
+    .table-card{padding:0;overflow:hidden}
+    .thead,.row{
+      display:grid;
+      grid-template-columns:100px 1.7fr 1fr 92px 126px 106px 80px;
+      gap:12px;
+      align-items:center;
+    }
+    .thead{
+      padding:14px 18px;
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:800;
+    }
+    .row{
+      padding:18px;
+      border-top:1px solid rgba(255,255,255,.04);
+      background:linear-gradient(180deg, rgba(10,20,31,.82), rgba(6,13,20,.92));
+    }
+    .team{
+      font-size:17px;
+      font-weight:800;
+      line-height:1.22;
+    }
+    .league{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .green{
+      color:var(--green);
+      font-weight:900;
+    }
+
+    .sport-card{
+      height:126px;
+      border-radius:20px;
+      border:1px solid var(--line);
+      padding:20px;
+      display:flex;flex-direction:column;justify-content:flex-end;
+      margin-bottom:14px;
+      background:
+        linear-gradient(135deg, rgba(22,39,57,.95), rgba(8,18,29,.98)),
+        radial-gradient(circle at 80% 10%, rgba(31,226,174,.10), transparent 18%);
+    }
+    .aside .widget{padding:18px}
+    .chart{
+      height:180px;
+      border-radius:20px;
+      border:1px solid var(--line-soft);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)),
+        linear-gradient(0deg, rgba(255,255,255,.05) 1px, transparent 1px);
+      background-size:auto, 100% 25%;
+      position:relative;
+      overflow:hidden;
+    }
+    .chart svg{position:absolute;inset:0;width:100%;height:100%}
+
+    .setup-note{
+      margin-top:10px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(245,158,11,.08);
+      border:1px solid rgba(245,158,11,.18);
+      color:#ffdca0;
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    @media (max-width:1320px){
+      .auth-layout,.app-shell{grid-template-columns:1fr}
+      .side-col,.aside,.sidebar{display:none}
+      .hero{grid-template-columns:1fr}
+      .hero-metric{justify-self:start}
+    }
+    @media (max-width:900px){
+      .page{padding:12px}
+      .auth-bottom{grid-template-columns:1fr}
+      .welcome-stats{grid-template-columns:1fr}
+      .topbar{grid-template-columns:1fr auto}
+      .wallet{grid-column:1 / -1}
+      .thead,.row{grid-template-columns:1fr}
+      .brand h1{font-size:92px}
+      .brand p{letter-spacing:.12em}
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">Ładowanie aplikacji…</div>
+
+  
+  <section id="authPage" class="page hidden auth-exact-page">
+    <div class="auth-exact-shell">
+      <img src="assets/login-reference.jpg" alt="" class="auth-reference" />
+      <div class="auth-live-overlay">
+        <form id="authForm" class="auth-hitbox">
+          <button id="tabLogin" class="auth-tab auth-tab-login" type="button" aria-label="Logowanie"></button>
+          <button id="tabRegister" class="auth-tab auth-tab-register" type="button" aria-label="Rejestracja"></button>
+
+          <label class="sr-only" for="email">Email</label>
+          <input id="email" class="auth-input auth-email" type="email" placeholder="" autocomplete="email" />
+
+          <label class="sr-only" for="password">Hasło</label>
+          <input id="password" class="auth-input auth-password" type="password" placeholder="" autocomplete="current-password" />
+
+          <div class="auth-status-row">
+            <span id="statusText">Gotowy do logowania.</span>
+            <span>🛡️</span>
+          </div>
+
+          <div id="notice" class="auth-notice"></div>
+          <button id="submitBtn" class="auth-submit" type="submit" aria-label="Zaloguj się"></button>
+        </form>
+
+        <div class="auth-live-stats" aria-hidden="true">
+          <div id="registeredCount" class="stat-registered">0</div>
+          <div id="activeCount" class="stat-active">0</div>
+          <div id="updatedTime" class="stat-time">--:--:--</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<section id="appPage" class="page hidden">
+    <div class="shell app-shell">
+      <aside class="sidebar">
+        <div class="card profile-card">
+          <div id="avatar" class="avatar">BN</div>
+          <div id="userName" class="profile-name">BetAI User</div>
+          <div class="profile-tag">VIP • <b>Premium</b></div>
+
+          <div class="profile-meta">
+            <div><span class="muted">Prognozy</span><strong>3,128</strong></div>
+            <div><span class="muted">Zysk (PLN)</span><strong>6.37M</strong></div>
+          </div>
+        </div>
+
+        <div class="card nav-card">
+          <div class="nav-item"><span class="nav-dot">🏠</span>Dashboard</div>
+          <div class="nav-item"><span class="nav-dot">⭐</span>Ulubione</div>
+          <div class="nav-item"><span class="nav-dot">📅</span>Najbliższe</div>
+          <div class="nav-item"><span class="nav-dot">🎯</span>Wydarzenia</div>
+          <div class="nav-item"><span class="nav-dot">🤖</span>Typy AI</div>
+          <div class="nav-item"><span class="nav-dot">📊</span>Statystyki</div>
+          <div class="nav-item"><span class="nav-dot">🎫</span>Kupon (0)</div>
+          <div class="nav-item active"><span class="nav-dot">📈</span>Trade</div>
+          <div class="nav-item"><span class="nav-dot">⚔️</span>H2H</div>
+          <div class="nav-item"><span class="nav-dot">🏆</span>Ligi</div>
+          <div class="nav-item"><span class="nav-dot">⚙️</span>Ustawienia</div>
+          <button id="logoutBtn" class="btn btn-danger logout-btn" type="button">Wyloguj</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="card topbar">
+          <input class="search" placeholder="Szukaj meczów, lig, drużyn..." />
+          <div class="icon-btn">🔔<span class="badge">3</span></div>
+          <div class="wallet">
+            <div class="wallet-icon">💳</div>
+            <div>PORTFEL: 4,924 PLN</div>
+          </div>
+        </div>
+
+        <div class="card hero">
+          <div>
+            <div class="eyebrow">BetAI Now</div>
+            <h2>TYPY AI NA DZIŚ</h2>
+            <p>Analizujemy setki źródeł, formę drużyn i linie bukmacherskie, aby dać Ci przewagę.</p>
+
+            <div class="filters">
+              <div class="filter-pill">Wszystkie</div>
+              <div class="filter-pill">Popularne</div>
+              <div class="filter-pill active">Piłka nożna</div>
+              <div class="filter-pill">Tenis</div>
+              <div class="filter-pill">Koszykówka</div>
+              <div class="filter-pill">Hokej</div>
+              <div class="filter-pill">Inne</div>
+            </div>
+          </div>
+
+          <div class="hero-metric">
+            <div class="label">Skuteczność AI</div>
+            <div class="big">76%</div>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="thead">
+            <div>Godzina</div><div>Mecz</div><div>Typ AI</div><div>Kurs</div><div>Pewność</div><div>Value</div><div>Sport</div>
+          </div>
+          <div id="rows"></div>
+        </div>
+      </main>
+
+      <aside class="aside">
+        <div class="card widget">
+          <div class="widget-title">Popularne dyscypliny</div>
+          <div class="sport-card"><strong>Piłka nożna</strong><span class="muted">1329 meczów</span></div>
+          <div class="sport-card"><strong>Tenis</strong><span class="muted">429 meczów</span></div>
+          <div class="sport-card"><strong>Koszykówka</strong><span class="muted">328 meczów</span></div>
+          <div class="sport-card"><strong>Hokej</strong><span class="muted">285 meczów</span></div>
+        </div>
+
+        <div class="card widget">
+          <div class="widget-title">Statystyki typów</div>
+          <div class="chart">
+            <svg viewBox="0 0 300 180" preserveAspectRatio="none">
+              <polyline fill="none" stroke="rgba(31,226,174,1)" stroke-width="3" points="12,120 58,128 102,90 146,68 190,108 236,42 290,18"/>
+              <circle cx="12" cy="120" r="4" fill="rgba(31,226,174,1)"/>
+              <circle cx="58" cy="128" r="4" fill="rgba(31,226,174,1)"/>
+              <circle cx="102" cy="90" r="4" fill="rgba(31,226,174,1)"/>
+              <circle cx="146" cy="68" r="4" fill="rgba(31,226,174,1)"/>
+              <circle cx="190" cy="108" r="4" fill="rgba(31,226,174,1)"/>
+              <circle cx="236" cy="42" r="4" fill="rgba(31,226,174,1)"/>
+              <circle cx="290" cy="18" r="5" fill="rgba(31,226,174,1)"/>
+            </svg>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://vrdikbibmozldyewacaa.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_hmM93BvZiCFy5ztC4QGq4w_ORi2SYcF';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    const state = {
+      mode: 'login',
+      user: null,
+      heartbeat: null
+    };
+
+    const matches = [
+      ['20:45','Arsenal','Chelsea','Premier League','Over 2.5','1.72',78,'+12%','⚽'],
+      ['21:00','Real Madrid','Bayern Monachium','Liga Mistrzów','Real Madrid','1.95',74,'+15%','⚽'],
+      ['19:30','Manchester City','Tottenham','Premier League','Man City','1.60',71,'+9%','⚽'],
+      ['18:00','Barcelona','Real Sociedad','La Liga','Over 3.5','2.10',68,'+11%','⚽'],
+      ['17:30','AC Milan','Atalanta','Serie A','BTTS','1.80',68,'+7%','⚽'],
+      ['21:00','PSG','Olympique Lyon','Ligue 1','PSG','1.50',64,'+6%','⚽'],
+      ['19:00','Benfica','Porto','Primeira Liga','Over 2.5','1.85',63,'+8%','⚽'],
+      ['20:30','Liverpool','Aston Villa','Premier League','Over 2.5','1.75',62,'+7%','⚽']
+    ];
+
+    const el = {
+      loading: document.getElementById('loading'),
+      authPage: document.getElementById('authPage'),
+      appPage: document.getElementById('appPage'),
+      authForm: document.getElementById('authForm'),
+      email: document.getElementById('email'),
+      password: document.getElementById('password'),
+      tabLogin: document.getElementById('tabLogin'),
+      tabRegister: document.getElementById('tabRegister'),
+      welcomeTitle: document.getElementById('welcomeTitle'),
+      statusText: document.getElementById('statusText'),
+      notice: document.getElementById('notice'),
+      submitBtn: document.getElementById('submitBtn'),
+      registeredCount: document.getElementById('registeredCount'),
+      activeCount: document.getElementById('activeCount'),
+      updatedTime: document.getElementById('updatedTime'),
+      rows: document.getElementById('rows'),
+      avatar: document.getElementById('avatar'),
+      userName: document.getElementById('userName'),
+      logoutBtn: document.getElementById('logoutBtn')
+    };
+
+    function renderRows() {
+      el.rows.innerHTML = matches.map(m => `
+        <div class="row">
+          <div><div style="font-size:18px;font-weight:900">${m[0]}</div><div class="league">Dziś</div></div>
+          <div><div class="team">${m[1]}</div><div class="team" style="color:#dbe6ee">${m[2]}</div><div class="league">${m[3]}</div></div>
+          <div><div class="team">${m[4]}</div><div class="league">Typ AI</div></div>
+          <div class="green">${m[5]}</div>
+          <div><div style="font-weight:900">${m[6]}%</div><div class="progress" style="margin-top:8px"><span style="width:${m[6]}%"></span></div></div>
+          <div class="green">${m[7]}</div>
+          <div>${m[8]}</div>
+        </div>
+      `).join('');
+    }
+
+    function setMode(nextMode) {
+      state.mode = nextMode;
+      el.tabLogin.classList.toggle('active', nextMode === 'login');
+      el.tabRegister.classList.toggle('active', nextMode === 'register');
+      el.welcomeTitle.textContent = nextMode === 'login' ? 'Logowanie do platformy' : 'Rejestracja do platformy';
+      el.submitBtn.textContent = nextMode === 'login' ? 'Zaloguj się' : 'Utwórz konto';
+      el.statusText.textContent = nextMode === 'login' ? 'Gotowy do logowania.' : 'Wpisz email i hasło, aby założyć konto.';
+      el.notice.textContent = '';
+    }
+
+    function setNotice(message = '', success = false) {
+      el.notice.textContent = message;
+      el.notice.style.color = success ? '#98f6d8' : '#ffb5b5';
+    }
+
+    function showLoading(show) {
+      el.loading.classList.toggle('hidden', !show);
+    }
+
+    function showAuth() {
+      el.appPage.classList.add('hidden');
+      el.authPage.classList.remove('hidden');
+      showLoading(false);
+    }
+
+    function showApp() {
+      el.authPage.classList.add('hidden');
+      el.appPage.classList.remove('hidden');
+      showLoading(false);
+    }
+
+    function clearSupabaseStorage() {
+      try {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.toLowerCase().includes('supabase')) keys.push(key);
+        }
+        keys.forEach(key => localStorage.removeItem(key));
+      } catch {}
+      try {
+        const keys = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key && key.toLowerCase().includes('supabase')) keys.push(key);
+        }
+        keys.forEach(key => sessionStorage.removeItem(key));
+      } catch {}
+    }
+
+    async function upsertProfile(user) {
+      if (!user) return;
+      try {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          email: user.email,
+          created_at: new Date().toISOString()
+        });
+      } catch {}
+    }
+
+    async function sendHeartbeat() {
+      if (!state.user) return;
+      try {
+        await supabase.from('presence_heartbeats').upsert({
+          user_id: state.user.id,
+          email: state.user.email,
+          last_seen: new Date().toISOString()
+        });
+      } catch {}
+    }
+
+    function stopHeartbeat() {
+      if (state.heartbeat) {
+        clearInterval(state.heartbeat);
+        state.heartbeat = null;
+      }
+    }
+
+    function startHeartbeat() {
+      stopHeartbeat();
+      sendHeartbeat();
+      state.heartbeat = setInterval(sendHeartbeat, 60000);
+    }
+
+    async function loadStats() {
+      let registeredUsers = 0;
+      let activeUsers = 0;
+
+      try {
+        const registered = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        registeredUsers = registered.count || 0;
+      } catch {}
+
+      try {
+        const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const active = await supabase.from('presence_heartbeats').select('*', { count: 'exact', head: true }).gte('last_seen', cutoff);
+        activeUsers = active.count || 0;
+      } catch {}
+
+      el.registeredCount.textContent = String(registeredUsers);
+      el.activeCount.textContent = String(activeUsers);
+      el.updatedTime.textContent = new Date().toLocaleTimeString('pl-PL');
+    }
+
+    function setUserUI(user) {
+      const email = user?.email || 'user@betai.pl';
+      el.avatar.textContent = email.slice(0,2).toUpperCase();
+      el.userName.textContent = email.split('@')[0];
+    }
+
+    async function afterLogin(user) {
+      state.user = user;
+      setUserUI(user);
+      await upsertProfile(user);
+      await loadStats();
+      startHeartbeat();
+      showApp();
+    }
+
+    async function doLogout() {
+      stopHeartbeat();
+      try { await supabase.auth.signOut({ scope: 'global' }); } catch {}
+      clearSupabaseStorage();
+      state.user = null;
+      await loadStats();
+      setNotice('Wylogowano.', true);
+      showAuth();
+    }
+
+    async function handleLogin(email, password) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.user) {
+        throw new Error(error?.message || 'Nie udało się zalogować.');
+      }
+      return data.user;
+    }
+
+    async function handleRegister(email, password) {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        throw new Error(error.message || 'Nie udało się utworzyć konta.');
+      }
+      if (data.user) {
+        await upsertProfile(data.user);
+      }
+      return data.user;
+    }
+
+    el.tabLogin.addEventListener('click', () => setMode('login'));
+    el.tabRegister.addEventListener('click', () => setMode('register'));
+
+    el.authForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const email = el.email.value.trim();
+      const password = el.password.value;
+
+      if (!email || !password) {
+        setNotice('Podaj email i hasło.');
+        return;
+      }
+
+      try {
+        if (state.mode === 'register') {
+          el.statusText.textContent = 'Tworzenie konta...';
+          setNotice('Trwa rejestracja...', true);
+          await handleRegister(email, password);
+          el.statusText.textContent = 'Logowanie do nowego konta...';
+        } else {
+          el.statusText.textContent = 'Trwa logowanie...';
+          setNotice('Sprawdzanie danych...', true);
+        }
+
+        const user = await handleLogin(email, password);
+        await afterLogin(user);
+      } catch (error) {
+        el.statusText.textContent = 'Wystąpił problem z logowaniem.';
+        setNotice(error?.message || 'Wystąpił błąd logowania.');
+      }
+    });
+
+    el.logoutBtn.addEventListener('click', doLogout);
+
+    async function init() {
+      renderRows();
+      setMode('login');
+      showLoading(true);
+
+      try {
+        await loadStats();
+        const { data } = await supabase.auth.getSession();
+        const user = data?.session?.user || null;
+
+        if (user) {
+          await afterLogin(user);
+        } else {
+          showAuth();
+        }
+      } catch {
+        clearSupabaseStorage();
+        showAuth();
+      }
+    }
+
+    window.addEventListener('beforeunload', stopHeartbeat);
+    init();
+  </script>
+</body>
+</html>
